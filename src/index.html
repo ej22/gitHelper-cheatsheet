@@ -1,0 +1,1188 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>git.how — Git &amp; GitHub CLI Cheat Sheet</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      /* ── Light mode ── */
+      --bg:          #f0f2f5;
+      --card-bg:     #ffffff;
+      --border:      #e1e4e8;
+      --shadow:      0 1px 3px rgba(0,0,0,0.07), 0 1px 2px rgba(0,0,0,0.04);
+      --text:        #1f2328;
+      --muted:       #57606a;
+      --code-bg:     #f6f8fa;
+      --code-border: #d0d7de;
+      --accent:      #0969da;
+      --orange:      #953800;
+      --green:       #116329;
+      --radius:      6px;
+      --radius-lg:   10px;
+      --font-sans:   'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      --font-mono:   'JetBrains Mono', 'Fira Code', 'Cascadia Code', ui-monospace, 'SF Mono', Menlo, monospace;
+    }
+
+    /* ── Dark mode ─────────────────────────────────────────── */
+    html.dark {
+      --bg:          #0d1117;
+      --card-bg:     #161b22;
+      --border:      #30363d;
+      --shadow:      0 1px 3px rgba(0,0,0,0.4), 0 1px 2px rgba(0,0,0,0.3);
+      --text:        #e6edf3;
+      --muted:       #8b949e;
+      --code-bg:     #0d1117;
+      --code-border: #21262d;
+      --accent:      #58a6ff;
+      --orange:      #ffa657;
+      --green:       #3fb950;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: var(--font-sans);
+      background: var(--bg);
+      color: var(--text);
+      font-size: 13.5px;
+      line-height: 1.55;
+      -webkit-font-smoothing: antialiased;
+      transition: background 0.2s, color 0.2s;
+    }
+
+    /* ─── Header ─────────────────────────────────────────── */
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: var(--card-bg);
+      border-bottom: 1px solid var(--border);
+      box-shadow: 0 1px 0 rgba(0,0,0,0.04);
+      transition: background 0.2s, border-color 0.2s;
+    }
+
+    .header-inner {
+      max-width: 1440px;
+      margin: 0 auto;
+      padding: 0 24px;
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      height: 54px;
+    }
+
+    .site-brand { flex-shrink: 0; line-height: 1.2; }
+    .site-title  { font-size: 17px; font-weight: 600; color: var(--text); letter-spacing: -0.3px; }
+    .site-tagline { font-size: 11px; color: var(--muted); }
+
+    .header-nav {
+      display: flex;
+      align-items: center;
+      gap: 2px;
+      overflow-x: auto;
+      scrollbar-width: none;
+      flex: 1;
+    }
+    .header-nav::-webkit-scrollbar { display: none; }
+    .header-nav a {
+      text-decoration: none;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 500;
+      padding: 4px 9px;
+      border-radius: var(--radius);
+      white-space: nowrap;
+      transition: background 0.13s, color 0.13s;
+    }
+    .header-nav a:hover { background: var(--code-bg); color: var(--text); }
+
+    /* ─── Layout ─────────────────────────────────────────── */
+    main {
+      max-width: 1440px;
+      margin: 0 auto;
+      padding: 28px 24px 56px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 18px;
+      align-items: start;
+    }
+
+    /* ─── Cards ──────────────────────────────────────────── */
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow);
+      padding: 18px 18px 20px;
+      min-width: 0; /* prevent grid blowout — items won't shrink below content size without this */
+    }
+
+    .card-wide { grid-column: span 2; }
+
+    .card-title {
+      font-size: 10.5px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.65px;
+      color: var(--accent);
+      margin-bottom: 14px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    /* ─── Command items ───────────────────────────────────── */
+    .cmd-list { display: flex; flex-direction: column; gap: 6px; }
+
+    .cmd-item {
+      padding: 7px 10px;
+      background: var(--code-bg);
+      border: 1px solid var(--code-border);
+      border-radius: var(--radius);
+    }
+
+    .cmd-line {
+      display: block;
+      font-family: var(--font-mono);
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text);
+      margin-bottom: 1px;
+      overflow-wrap: break-word;
+      word-break: break-all; /* monospace command strings have no natural break points */
+    }
+
+    .cmd-desc {
+      font-size: 11.5px;
+      color: var(--muted);
+      display: block;
+    }
+
+    /* ─── Sub-sections ────────────────────────────────────── */
+    .sub-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .sub-grid > * { min-width: 0; }
+    .sub-title {
+      font-size: 10.5px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--muted);
+      margin-bottom: 8px;
+    }
+    .sub-section { margin-top: 14px; }
+
+    /* ─── Code blocks ─────────────────────────────────────── */
+    .example-label {
+      font-size: 10.5px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      color: var(--muted);
+      margin: 14px 0 6px;
+    }
+
+    .code-block { position: relative; }
+    .code-block + .code-block { margin-top: 10px; }
+    .code-block:hover .copy-btn { opacity: 1; }
+
+    .copy-btn {
+      position: absolute;
+      top: 7px;
+      right: 7px;
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      font-size: 10.5px;
+      font-family: var(--font-sans);
+      font-weight: 500;
+      color: var(--muted);
+      padding: 3px 8px;
+      cursor: pointer;
+      opacity: 0;
+      transition: opacity 0.13s, background 0.13s, color 0.13s;
+      z-index: 1;
+      line-height: 1.4;
+    }
+    .copy-btn:hover { background: var(--code-bg); color: var(--text); }
+    .copy-btn.copied { color: var(--green); border-color: #2da44e; }
+
+    pre {
+      background: var(--code-bg);
+      border: 1px solid var(--code-border);
+      border-radius: var(--radius);
+      padding: 11px 13px;
+      overflow-x: auto;
+      font-family: var(--font-mono);
+      font-size: 11.5px;
+      line-height: 1.75;
+    }
+    pre code {
+      font-family: inherit;
+      background: none;
+      border: none;
+      padding: 0;
+      color: var(--text);
+    }
+
+    .cmt { color: var(--muted); font-style: normal; }
+
+    /* ─── Footer ─────────────────────────────────────────── */
+    footer {
+      text-align: center;
+      padding: 20px 24px;
+      color: var(--muted);
+      font-size: 12px;
+      border-top: 1px solid var(--border);
+      background: var(--card-bg);
+      margin-top: 0;
+      transition: background 0.2s, border-color 0.2s;
+    }
+    footer code {
+      font-family: var(--font-mono);
+      font-size: 11.5px;
+      background: var(--code-bg);
+      border: 1px solid var(--code-border);
+      border-radius: 3px;
+      padding: 1px 5px;
+    }
+
+    /* ─── Theme toggle ───────────────────────────────────── */
+    .theme-toggle {
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 32px;
+      height: 32px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: transparent;
+      color: var(--muted);
+      cursor: pointer;
+      transition: background 0.13s, color 0.13s, border-color 0.13s;
+      padding: 0;
+    }
+    .theme-toggle:hover { background: var(--code-bg); color: var(--text); }
+    .theme-toggle svg { width: 15px; height: 15px; display: block; }
+
+    /* show sun in dark mode (click → go light), moon in light mode */
+    html.dark  .icon-moon { display: none; }
+    html:not(.dark) .icon-sun { display: none; }
+
+    /* ─── Responsive ─────────────────────────────────────── */
+    @media (max-width: 1140px) {
+      .grid { grid-template-columns: repeat(2, 1fr); }
+      .card-wide { grid-column: span 2; }
+    }
+    @media (max-width: 720px) {
+      .grid { grid-template-columns: 1fr; }
+      .card-wide { grid-column: span 1; }
+      .sub-grid { grid-template-columns: 1fr; }
+      .header-nav { display: none; }
+      .header-inner { padding: 0 16px; }
+      main { padding: 16px 16px 40px; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <div class="site-brand">
+      <div class="site-title">git.how</div>
+      <div class="site-tagline">Git &amp; GitHub CLI Cheat Sheet</div>
+    </div>
+    <nav class="header-nav" aria-label="Jump to section">
+      <a href="#setup">Setup</a>
+      <a href="#staging">Staging</a>
+      <a href="#branching">Branching</a>
+      <a href="#remote">Remote</a>
+      <a href="#stash">Stash</a>
+      <a href="#history">History</a>
+      <a href="#undoing">Undoing</a>
+      <a href="#tags">Tags</a>
+      <a href="#gh">GitHub CLI</a>
+      <a href="#gitconfig">.gitconfig</a>
+      <a href="#actions">Actions</a>
+    </nav>
+    <button class="theme-toggle" id="themeToggle" aria-label="Toggle dark mode" title="Toggle dark mode">
+      <!-- Sun: shown in dark mode, click to go light -->
+      <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <circle cx="12" cy="12" r="5"/>
+        <line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/>
+        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+        <line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/>
+        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+      </svg>
+      <!-- Moon: shown in light mode, click to go dark -->
+      <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+      </svg>
+    </button>
+  </div>
+</header>
+
+<main>
+  <div class="grid">
+
+    <!-- ── 1. Setup & Config ─────────────────────────────── -->
+    <section class="card" id="setup">
+      <h2 class="card-title">Setup &amp; Config</h2>
+      <div class="cmd-list">
+        <div class="cmd-item">
+          <code class="cmd-line">git init [directory]</code>
+          <span class="cmd-desc">Create a new local repository</span>
+        </div>
+        <div class="cmd-item">
+          <code class="cmd-line">git clone &lt;url&gt; [folder]</code>
+          <span class="cmd-desc">Clone a remote repository locally</span>
+        </div>
+        <div class="cmd-item">
+          <code class="cmd-line">git config --global user.name "Name"</code>
+          <span class="cmd-desc">Set commit author name globally</span>
+        </div>
+        <div class="cmd-item">
+          <code class="cmd-line">git config --global user.email "e@x"</code>
+          <span class="cmd-desc">Set commit author email globally</span>
+        </div>
+        <div class="cmd-item">
+          <code class="cmd-line">git config --local user.email "work@co"</code>
+          <span class="cmd-desc">Override email for this repo only</span>
+        </div>
+        <div class="cmd-item">
+          <code class="cmd-line">git config --list --show-origin</code>
+          <span class="cmd-desc">Show all config values and where they're set</span>
+        </div>
+      </div>
+      <p class="example-label">Example — New Project from Scratch</p>
+      <div class="code-block">
+        <button class="copy-btn" aria-label="Copy code">Copy</button>
+        <pre><code><span class="cmt"># Create and initialise a new project</span>
+mkdir my-app &amp;&amp; cd my-app
+git init
+git config user.name "Alice Smith"
+git config user.email "alice@example.com"
+
+<span class="cmt"># Clone via HTTPS</span>
+git clone https://github.com/user/repo.git
+
+<span class="cmt"># Clone via SSH (preferred when you have push access)</span>
+git clone git@github.com:user/repo.git
+
+<span class="cmt"># Clone into a specific folder name</span>
+git clone git@github.com:user/repo.git myproject</code></pre>
+      </div>
+    </section>
+
+    <!-- ── 2. Staging & Commits ──────────────────────────── -->
+    <section class="card" id="staging">
+      <h2 class="card-title">Staging &amp; Commits</h2>
+      <div class="cmd-list">
+        <div class="cmd-item">
+          <code class="cmd-line">git status</code>
+          <span class="cmd-desc">Show working tree and staging area status</span>
+        </div>
+        <div class="cmd-item">
+          <code class="cmd-line">git add &lt;file&gt;</code>
+          <span class="cmd-desc">Stage a specific file</span>
+        </div>
+        <div class="cmd-item">
+          <code class="cmd-line">git add .</code>
+          <span class="cmd-desc">Stage all changes in current directory</span>
+        </div>
+        <div class="cmd-item">
+          <code class="cmd-line">git add -p</code>
+          <span class="cmd-desc">Interactively select hunks to stage</span>
+        </div>
+        <div class="cmd-item">
+          <code class="cmd-line">git commit -m "message"</code>
+          <span class="cmd-desc">Commit staged changes with a message</span>
+        </div>
+        <div class="cmd-item">
+          <code class="cmd-line">git commit -am "message"</code>
+          <span class="cmd-desc">Stage all tracked changes and commit in one step</span>
+        </div>
+        <div class="cmd-item">
+          <code class="cmd-line">git commit --amend</code>
+          <span class="cmd-desc">Edit the last commit message or add staged files</span>
+        </div>
+        <div class="cmd-item">
+          <code class="cmd-line">git diff</code>
+          <span class="cmd-desc">Show unstaged changes</span>
+        </div>
+        <div class="cmd-item">
+          <code class="cmd-line">git diff --staged</code>
+          <span class="cmd-desc">Show changes already staged for next commit</span>
+        </div>
+      </div>
+      <p class="example-label">Example — Partial Staging &amp; Amend</p>
+      <div class="code-block">
+        <button class="copy-btn" aria-label="Copy code">Copy</button>
+        <pre><code><span class="cmt"># Stage only specific hunks from a file</span>
+git add -p src/auth.js
+<span class="cmt"># Press y/n to stage/skip, s to split hunk, q to quit</span>
+
+<span class="cmt"># Commit and then spot a typo in the message</span>
+git commit -m "fix authentcation bug"
+git commit --amend -m "fix authentication bug"
+
+<span class="cmt"># Forgot to include a file? Add it to the last commit</span>
+git add src/forgot-this.js
+git commit --amend --no-edit</code></pre>
+      </div>
+    </section>
+
+    <!-- ── 3. Branching & Merging ────────────────────────── -->
+    <section class="card" id="branching">
+      <h2 class="card-title">Branching &amp; Merging</h2>
+      <div class="cmd-list">
+        <div class="cmd-item">
+          <code class="cmd-line">git branch</code>
+          <span class="cmd-desc">List local branches (* marks current)</span>
+        </div>
+        <div class="cmd-item">
+          <code class="cmd-line">git branch -a</code>
+          <span class="cmd-desc">List all branches including remotes</span>
+        </div>
+        <div class="cmd-item">
+          <code class="cmd-line">git branch &lt;name&gt;</code>
+          <span class="cmd-desc">Create a new branch at current commit</span>
+        </div>
+        <div class="cmd-item">
+          <code class="cmd-line">git branch -d &lt;name&gt;</code>
+          <span class="cmd-desc">Delete a fully merged branch</span>
+        </div>
+        <div class="cmd-item">
+          <code class="cmd-line">git branch -m &lt;old&gt; &lt;new&gt;</code>
+          <span class="cmd-desc">Rename a branch</span>
+        </div>
+        <div class="cmd-item">
+          <code class="cmd-line">git switch &lt;branch&gt;</code>
+          <span class="cmd-desc">Switch to an existing branch</span>
+        </div>
+        <div class="cmd-item">
+          <code class="cmd-line">git switch -c &lt;new-branch&gt;</code>
+          <span class="cmd-desc">Create and switch to a new branch</span>
+        </div>
+        <div class="cmd-item">
+          <code class="cmd-line">git merge &lt;branch&gt;</code>
+          <span class="cmd-desc">Merge branch into current (fast-forward if possible)</span>
+        </div>
+        <div class="cmd-item">
+          <code class="cmd-line">git merge --no-ff &lt;branch&gt;</code>
+          <span class="cmd-desc">Always create a merge commit (preserves branch history)</span>
+        </div>
+        <div class="cmd-item">
+          <code class="cmd-line">git rebase main</code>
+          <span class="cmd-desc">Replay current branch commits on top of main</span>
+        </div>
+        <div class="cmd-item">
+          <code class="cmd-line">git rebase -i HEAD~3</code>
+          <span class="cmd-desc">Interactive rebase — squash, reword, or drop last 3 commits</span>
+        </div>
+      </div>
+      <p class="example-label">Example — Feature Branch Workflow</p>
+      <div class="code-block">
+        <button class="copy-btn" aria-label="Copy code">Copy</button>
+        <pre><code><span class="cmt"># Start from an up-to-date main</span>
+git switch main &amp;&amp; git pull
+git switch -c feature/user-auth
+
+<span class="cmt"># After a few rough commits, clean them up interactively</span>
+git commit -m "wip: login form"
+git commit -m "wip: hook up API"
+git rebase -i HEAD~2
+<span class="cmt"># In editor: change second "pick" to "squash", save &amp; write message</span>
+
+<span class="cmt"># Rebase onto latest main before requesting a merge</span>
+git fetch origin
+git rebase origin/main
+
+<span class="cmt"># Merge into main with an explicit merge commit</span>
+git switch main
+git merge --no-ff feature/user-auth</code></pre>
+      </div>
+    </section>
+
+    <!-- ── 4. Remote & Sync ──────────────────────────────── -->
+    <section class="card" id="remote">
+      <h2 class="card-title">Remote &amp; Sync</h2>
+      <div class="cmd-list">
+        <div class="cmd-item">
+          <code class="cmd-line">git remote -v</code>
+          <span class="cmd-desc">List remotes with their fetch/push URLs</span>
+        </div>
+        <div class="cmd-item">
+          <code class="cmd-line">git remote add &lt;name&gt; &lt;url&gt;</code>
+          <span class="cmd-desc">Register a new remote</span>
+        </div>
+        <div class="cmd-item">
+          <code class="cmd-line">git remote rename &lt;old&gt; &lt;new&gt;</code>
+          <span class="cmd-desc">Rename a remote</span>
+        </div>
+        <div class="cmd-item">
+          <code class="cmd-line">git remote remove &lt;name&gt;</code>
+          <span class="cmd-desc">Remove a remote</span>
+        </div>
+        <div class="cmd-item">
+          <code class="cmd-line">git fetch [remote]</code>
+          <span class="cmd-desc">Download objects and refs without merging</span>
+        </div>
+        <div class="cmd-item">
+          <code class="cmd-line">git pull</code>
+          <span class="cmd-desc">Fetch and merge (or rebase) remote changes</span>
+        </div>
+        <div class="cmd-item">
+          <code class="cmd-line">git pull --rebase</code>
+          <span class="cmd-desc">Fetch and rebase your commits on top</span>
+        </div>
+        <div class="cmd-item">
+          <code class="cmd-line">git push -u origin &lt;branch&gt;</code>
+          <span class="cmd-desc">Push and set upstream tracking branch</span>
+        </div>
+        <div class="cmd-item">
+          <code class="cmd-line">git push --force-with-lease</code>
+          <span class="cmd-desc">Safe force-push — aborts if remote has new commits</span>
+        </div>
+      </div>
+      <p class="example-label">Example — Forking Workflow</p>
+      <div class="code-block">
+        <button class="copy-btn" aria-label="Copy code">Copy</button>
+        <pre><code><span class="cmt"># Clone your fork, then add the original as "upstream"</span>
+git clone git@github.com:you/repo.git &amp;&amp; cd repo
+git remote add upstream git@github.com:original/repo.git
+
+<span class="cmt"># Sync your local main with upstream</span>
+git fetch upstream
+git switch main
+git rebase upstream/main
+git push origin main
+
+<span class="cmt"># Create a feature branch, push, and set tracking in one go</span>
+git switch -c fix/typos
+git commit -am "fix: correct typos in README"
+git push -u origin fix/typos</code></pre>
+      </div>
+    </section>
+
+    <!-- ── 5. Stash & Clean ──────────────────────────────── -->
+    <section class="card" id="stash">
+      <h2 class="card-title">Stash &amp; Clean</h2>
+      <div class="cmd-list">
+        <div class="cmd-item">
+          <code class="cmd-line">git stash</code>
+          <span class="cmd-desc">Shelve uncommitted changes (tracked files)</span>
+        </div>
+        <div class="cmd-item">
+          <code class="cmd-line">git stash push -u -m "message"</code>
+          <span class="cmd-desc">Stash with a label, including untracked files</span>
+        </div>
+        <div class="cmd-item">
+          <code class="cmd-line">git stash list</code>
+          <span class="cmd-desc">Show all stashed changesets</span>
+        </div>
+        <div class="cmd-item">
+          <code class="cmd-line">git stash pop</code>
+          <span class="cmd-desc">Restore most recent stash and remove it</span>
+        </div>
+        <div class="cmd-item">
+          <code class="cmd-line">git stash apply stash@{2}</code>
+          <span class="cmd-desc">Apply a specific stash without removing it</span>
+        </div>
+        <div class="cmd-item">
+          <code class="cmd-line">git stash show -p stash@{0}</code>
+          <span class="cmd-desc">Show the diff stored in a stash</span>
+        </div>
+        <div class="cmd-item">
+          <code class="cmd-line">git stash drop stash@{0}</code>
+          <span class="cmd-desc">Delete a specific stash entry</span>
+        </div>
+        <div class="cmd-item">
+          <code class="cmd-line">git clean -n</code>
+          <span class="cmd-desc">Dry run: preview what would be deleted</span>
+        </div>
+        <div class="cmd-item">
+          <code class="cmd-line">git clean -fd</code>
+          <span class="cmd-desc">Remove untracked files and directories</span>
+        </div>
+      </div>
+      <p class="example-label">Example — Stash to Switch Contexts</p>
+      <div class="code-block">
+        <button class="copy-btn" aria-label="Copy code">Copy</button>
+        <pre><code><span class="cmt"># Mid-feature work, urgent bug arrives</span>
+git stash push -m "wip: checkout flow redesign"
+
+<span class="cmt"># Fix bug on a dedicated branch</span>
+git switch main
+git switch -c hotfix/payment-crash
+git commit -am "fix: prevent nil pointer in payment handler"
+git push -u origin hotfix/payment-crash
+
+<span class="cmt"># Return to the feature</span>
+git switch feature/checkout
+git stash pop
+
+<span class="cmt"># Nuke untracked build artifacts (dry run first)</span>
+git clean -n
+git clean -fd</code></pre>
+      </div>
+    </section>
+
+    <!-- ── 6. History & Inspection ───────────────────────── -->
+    <section class="card" id="history">
+      <h2 class="card-title">History &amp; Inspection</h2>
+      <div class="cmd-list">
+        <div class="cmd-item">
+          <code class="cmd-line">git log --oneline --graph --all</code>
+          <span class="cmd-desc">Compact visual graph of all branches</span>
+        </div>
+        <div class="cmd-item">
+          <code class="cmd-line">git log --author="Alice" --since="2w"</code>
+          <span class="cmd-desc">Filter commits by author and time window</span>
+        </div>
+        <div class="cmd-item">
+          <code class="cmd-line">git log --grep="fix" -p</code>
+          <span class="cmd-desc">Search commits by message and show their diffs</span>
+        </div>
+        <div class="cmd-item">
+          <code class="cmd-line">git log -S "functionName"</code>
+          <span class="cmd-desc">Find commits that added/removed a string (pickaxe)</span>
+        </div>
+        <div class="cmd-item">
+          <code class="cmd-line">git blame &lt;file&gt;</code>
+          <span class="cmd-desc">Show who last changed each line of a file</span>
+        </div>
+        <div class="cmd-item">
+          <code class="cmd-line">git show &lt;commit&gt;</code>
+          <span class="cmd-desc">Show a commit's metadata and diff</span>
+        </div>
+        <div class="cmd-item">
+          <code class="cmd-line">git reflog</code>
+          <span class="cmd-desc">Full history of HEAD movements — essential for recovery</span>
+        </div>
+        <div class="cmd-item">
+          <code class="cmd-line">git bisect start</code>
+          <span class="cmd-desc">Begin binary search for a regression</span>
+        </div>
+        <div class="cmd-item">
+          <code class="cmd-line">git bisect good &lt;hash&gt; / bad</code>
+          <span class="cmd-desc">Mark commits; git checks out the midpoint each round</span>
+        </div>
+        <div class="cmd-item">
+          <code class="cmd-line">git bisect reset</code>
+          <span class="cmd-desc">End bisect session and return to original HEAD</span>
+        </div>
+      </div>
+      <p class="example-label">Example — Log Graph &amp; Bisect to Find a Bug</p>
+      <div class="code-block">
+        <button class="copy-btn" aria-label="Copy code">Copy</button>
+        <pre><code><span class="cmt"># Pretty graph of all branches and tags</span>
+git log --oneline --graph --all --decorate
+
+<span class="cmt"># Binary search: tests failing since some recent commit</span>
+git bisect start
+git bisect bad
+<span class="cmt"># Point to a commit you know was good</span>
+git bisect good v2.1.0
+<span class="cmt"># Git checks out the midpoint — run your tests</span>
+npm test
+git bisect good
+<span class="cmt"># Repeat until git names the first bad commit</span>
+git bisect bad
+git bisect reset</code></pre>
+      </div>
+    </section>
+
+    <!-- ── 7. Undoing Things ─────────────────────────────── -->
+    <section class="card" id="undoing">
+      <h2 class="card-title">Undoing Things</h2>
+      <div class="cmd-list">
+        <div class="cmd-item">
+          <code class="cmd-line">git restore &lt;file&gt;</code>
+          <span class="cmd-desc">Discard working-tree changes to a file</span>
+        </div>
+        <div class="cmd-item">
+          <code class="cmd-line">git restore --staged &lt;file&gt;</code>
+          <span class="cmd-desc">Unstage a file (working tree untouched)</span>
+        </div>
+        <div class="cmd-item">
+          <code class="cmd-line">git reset --soft HEAD~1</code>
+          <span class="cmd-desc">Undo last commit — changes stay staged</span>
+        </div>
+        <div class="cmd-item">
+          <code class="cmd-line">git reset --mixed HEAD~1</code>
+          <span class="cmd-desc">Undo last commit — changes go back to unstaged (default)</span>
+        </div>
+        <div class="cmd-item">
+          <code class="cmd-line">git reset --hard HEAD~1</code>
+          <span class="cmd-desc">Undo last commit — changes are discarded entirely ⚠</span>
+        </div>
+        <div class="cmd-item">
+          <code class="cmd-line">git revert &lt;commit&gt;</code>
+          <span class="cmd-desc">New commit that inverts a change (safe on shared branches)</span>
+        </div>
+        <div class="cmd-item">
+          <code class="cmd-line">git revert HEAD~3..HEAD</code>
+          <span class="cmd-desc">Revert a range of commits</span>
+        </div>
+      </div>
+      <p class="example-label">Example — Committed to the Wrong Branch</p>
+      <div class="code-block">
+        <button class="copy-btn" aria-label="Copy code">Copy</button>
+        <pre><code><span class="cmt"># Accidentally committed feature work directly to main</span>
+git log --oneline -4
+
+<span class="cmt"># Carry those commits onto a new branch, then reset main</span>
+git switch -c feature/accidental-work
+git switch main
+git reset --hard origin/main
+
+<span class="cmt"># Alternative: undo commit, keep changes, re-commit on right branch</span>
+git reset --soft HEAD~1
+git stash
+git switch -c feature/my-work
+git stash pop
+git commit -m "feat: my work on correct branch"
+
+<span class="cmt"># Revert a bad commit that is already pushed to shared branch</span>
+git revert abc1234
+git push</code></pre>
+      </div>
+    </section>
+
+    <!-- ── 8. Tags & Releases ────────────────────────────── -->
+    <section class="card" id="tags">
+      <h2 class="card-title">Tags &amp; Releases</h2>
+      <div class="cmd-list">
+        <div class="cmd-item">
+          <code class="cmd-line">git tag</code>
+          <span class="cmd-desc">List all tags (alphabetically)</span>
+        </div>
+        <div class="cmd-item">
+          <code class="cmd-line">git tag v1.0.0</code>
+          <span class="cmd-desc">Lightweight tag at current commit (just a pointer)</span>
+        </div>
+        <div class="cmd-item">
+          <code class="cmd-line">git tag -a v1.0.0 -m "Release"</code>
+          <span class="cmd-desc">Annotated tag with message, tagger, and date (preferred)</span>
+        </div>
+        <div class="cmd-item">
+          <code class="cmd-line">git tag -a v1.0.0 &lt;commit&gt;</code>
+          <span class="cmd-desc">Tag a specific past commit</span>
+        </div>
+        <div class="cmd-item">
+          <code class="cmd-line">git show v1.0.0</code>
+          <span class="cmd-desc">Show tag metadata and the tagged commit</span>
+        </div>
+        <div class="cmd-item">
+          <code class="cmd-line">git push origin v1.0.0</code>
+          <span class="cmd-desc">Push a single tag to remote</span>
+        </div>
+        <div class="cmd-item">
+          <code class="cmd-line">git push origin --tags</code>
+          <span class="cmd-desc">Push all local tags to remote</span>
+        </div>
+        <div class="cmd-item">
+          <code class="cmd-line">git tag -d v1.0.0</code>
+          <span class="cmd-desc">Delete a local tag</span>
+        </div>
+        <div class="cmd-item">
+          <code class="cmd-line">git push origin :refs/tags/v1.0.0</code>
+          <span class="cmd-desc">Delete a remote tag</span>
+        </div>
+      </div>
+      <p class="example-label">Example — Tagging a Release</p>
+      <div class="code-block">
+        <button class="copy-btn" aria-label="Copy code">Copy</button>
+        <pre><code><span class="cmt"># Make sure you're on the right commit</span>
+git switch main &amp;&amp; git pull
+
+<span class="cmt"># Create an annotated tag (stores tagger, date, message)</span>
+git tag -a v1.0.0 -m "Release v1.0.0: initial stable release"
+
+<span class="cmt"># Push the tag — can trigger a GitHub Actions release workflow</span>
+git push origin v1.0.0
+
+<span class="cmt"># Oops, tagged the wrong commit — delete and re-create</span>
+git tag -d v1.0.0
+git push origin :refs/tags/v1.0.0
+git tag -a v1.0.0 HEAD -m "Release v1.0.0: initial stable release"
+git push origin v1.0.0</code></pre>
+      </div>
+    </section>
+
+    <!-- ── 9. GitHub CLI ─────────────────────────────────── -->
+    <section class="card card-wide" id="gh">
+      <h2 class="card-title">GitHub CLI (gh)</h2>
+      <div class="sub-grid">
+        <div>
+          <p class="sub-title">Auth &amp; Repo</p>
+          <div class="cmd-list">
+            <div class="cmd-item">
+              <code class="cmd-line">gh auth login</code>
+              <span class="cmd-desc">Authenticate with GitHub (browser or token)</span>
+            </div>
+            <div class="cmd-item">
+              <code class="cmd-line">gh repo create &lt;name&gt; --public</code>
+              <span class="cmd-desc">Create a new GitHub repository</span>
+            </div>
+            <div class="cmd-item">
+              <code class="cmd-line">gh repo clone &lt;owner/repo&gt;</code>
+              <span class="cmd-desc">Clone a repo using SSH if authenticated</span>
+            </div>
+            <div class="cmd-item">
+              <code class="cmd-line">gh repo fork &lt;owner/repo&gt; --clone</code>
+              <span class="cmd-desc">Fork and clone in one step</span>
+            </div>
+            <div class="cmd-item">
+              <code class="cmd-line">gh repo view --web</code>
+              <span class="cmd-desc">Open current repo in browser</span>
+            </div>
+          </div>
+          <p class="sub-title" style="margin-top:14px">Issues</p>
+          <div class="cmd-list">
+            <div class="cmd-item">
+              <code class="cmd-line">gh issue create -t "Title" -b "Body"</code>
+              <span class="cmd-desc">Create a new issue</span>
+            </div>
+            <div class="cmd-item">
+              <code class="cmd-line">gh issue list --assignee @me</code>
+              <span class="cmd-desc">List issues assigned to you</span>
+            </div>
+            <div class="cmd-item">
+              <code class="cmd-line">gh issue close 42 -c "resolved in #99"</code>
+              <span class="cmd-desc">Close issue #42 with a comment</span>
+            </div>
+            <div class="cmd-item">
+              <code class="cmd-line">gh issue view 42 --web</code>
+              <span class="cmd-desc">Open issue in browser</span>
+            </div>
+          </div>
+        </div>
+        <div>
+          <p class="sub-title">Pull Requests</p>
+          <div class="cmd-list">
+            <div class="cmd-item">
+              <code class="cmd-line">gh pr create --fill</code>
+              <span class="cmd-desc">Create PR using branch name &amp; commit messages as body</span>
+            </div>
+            <div class="cmd-item">
+              <code class="cmd-line">gh pr list</code>
+              <span class="cmd-desc">List open pull requests in current repo</span>
+            </div>
+            <div class="cmd-item">
+              <code class="cmd-line">gh pr checkout 99</code>
+              <span class="cmd-desc">Fetch and check out PR #99 locally</span>
+            </div>
+            <div class="cmd-item">
+              <code class="cmd-line">gh pr merge 99 --squash --delete-branch</code>
+              <span class="cmd-desc">Squash-merge PR and remove the branch</span>
+            </div>
+            <div class="cmd-item">
+              <code class="cmd-line">gh pr view --web</code>
+              <span class="cmd-desc">Open current branch's PR in browser</span>
+            </div>
+          </div>
+          <p class="sub-title" style="margin-top:14px">Runs &amp; Gists</p>
+          <div class="cmd-list">
+            <div class="cmd-item">
+              <code class="cmd-line">gh run list --limit 5</code>
+              <span class="cmd-desc">Show last 5 Actions runs</span>
+            </div>
+            <div class="cmd-item">
+              <code class="cmd-line">gh run watch</code>
+              <span class="cmd-desc">Stream live output of the latest run</span>
+            </div>
+            <div class="cmd-item">
+              <code class="cmd-line">gh run view --log-failed</code>
+              <span class="cmd-desc">Show only the logs from failed steps</span>
+            </div>
+            <div class="cmd-item">
+              <code class="cmd-line">gh gist create notes.md --public</code>
+              <span class="cmd-desc">Create a public gist from a file</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <p class="example-label">Example — Full PR Workflow with gh</p>
+      <div class="code-block">
+        <button class="copy-btn" aria-label="Copy code">Copy</button>
+        <pre><code><span class="cmt"># Start from an issue</span>
+gh issue view 42
+
+<span class="cmt"># Create branch, do work, push with upstream tracking</span>
+git switch -c feat/dark-mode
+git commit -am "feat: add dark mode toggle"
+git push -u origin feat/dark-mode
+
+<span class="cmt"># Open a PR that closes the issue, requesting reviewers</span>
+gh pr create --title "feat: dark mode toggle" \
+  --body "Closes #42" \
+  --reviewer alice,bob
+
+<span class="cmt"># Watch CI live while you wait for review</span>
+gh run watch
+
+<span class="cmt"># Once approved: squash-merge and clean up the branch</span>
+gh pr merge --squash --delete-branch</code></pre>
+      </div>
+    </section>
+
+    <!-- ── 10. .gitconfig Tips ───────────────────────────── -->
+    <section class="card" id="gitconfig">
+      <h2 class="card-title">.gitconfig Tips</h2>
+      <div class="cmd-list">
+        <div class="cmd-item">
+          <code class="cmd-line">git config --global alias.co checkout</code>
+          <span class="cmd-desc">Alias: <code>git co</code> → <code>git checkout</code></span>
+        </div>
+        <div class="cmd-item">
+          <code class="cmd-line">git config --global pull.rebase true</code>
+          <span class="cmd-desc">Always rebase instead of merge when pulling</span>
+        </div>
+        <div class="cmd-item">
+          <code class="cmd-line">git config --global init.defaultBranch main</code>
+          <span class="cmd-desc">New repos start on <code>main</code> instead of <code>master</code></span>
+        </div>
+        <div class="cmd-item">
+          <code class="cmd-line">git config --global push.autoSetupRemote true</code>
+          <span class="cmd-desc"><code>git push</code> auto-sets upstream — no more <code>-u</code></span>
+        </div>
+        <div class="cmd-item">
+          <code class="cmd-line">git config --global core.editor "code --wait"</code>
+          <span class="cmd-desc">Use VS Code for commit messages and interactive rebase</span>
+        </div>
+        <div class="cmd-item">
+          <code class="cmd-line">git config --global core.pager delta</code>
+          <span class="cmd-desc">Use <code>delta</code> for syntax-highlighted diffs (install separately)</span>
+        </div>
+      </div>
+      <p class="example-label">Recommended ~/.gitconfig</p>
+      <div class="code-block">
+        <button class="copy-btn" aria-label="Copy code">Copy</button>
+        <pre><code>[user]
+    name = Alice Smith
+    email = alice@example.com
+
+[init]
+    defaultBranch = main
+
+[pull]
+    rebase = true
+
+[push]
+    autoSetupRemote = true
+
+[core]
+    editor = code --wait
+    pager = delta
+
+[delta]
+    navigate = true
+    line-numbers = true
+    side-by-side = true
+
+[alias]
+    co = checkout
+    br = branch
+    st = status
+    lg = log --oneline --graph --all --decorate
+    last = log -1 HEAD --stat
+    unstage = restore --staged
+
+[credential]
+    helper = osxkeychain</code></pre>
+      </div>
+    </section>
+
+    <!-- ── 11. GitHub Actions ────────────────────────────── -->
+    <section class="card card-wide" id="actions">
+      <h2 class="card-title">GitHub Actions Basics</h2>
+      <div class="sub-grid">
+        <div>
+          <p class="sub-title">Key Concepts</p>
+          <div class="cmd-list">
+            <div class="cmd-item">
+              <code class="cmd-line">on: push / pull_request</code>
+              <span class="cmd-desc">Trigger on code push or PR open/update</span>
+            </div>
+            <div class="cmd-item">
+              <code class="cmd-line">on: schedule: cron: '0 9 * * 1'</code>
+              <span class="cmd-desc">Cron trigger (every Monday at 09:00 UTC)</span>
+            </div>
+            <div class="cmd-item">
+              <code class="cmd-line">on: workflow_dispatch</code>
+              <span class="cmd-desc">Allow manual trigger from the GitHub UI</span>
+            </div>
+            <div class="cmd-item">
+              <code class="cmd-line">runs-on: ubuntu-latest</code>
+              <span class="cmd-desc">Run job on a GitHub-hosted Ubuntu runner</span>
+            </div>
+            <div class="cmd-item">
+              <code class="cmd-line">uses: actions/checkout@v4</code>
+              <span class="cmd-desc">Check out the repository code</span>
+            </div>
+            <div class="cmd-item">
+              <code class="cmd-line">uses: actions/setup-node@v4</code>
+              <span class="cmd-desc">Install and configure a Node.js version</span>
+            </div>
+            <div class="cmd-item">
+              <code class="cmd-line">uses: actions/cache@v4</code>
+              <span class="cmd-desc">Cache dependencies to speed up runs</span>
+            </div>
+            <div class="cmd-item">
+              <code class="cmd-line">${{ secrets.MY_SECRET }}</code>
+              <span class="cmd-desc">Reference a repository or org secret</span>
+            </div>
+            <div class="cmd-item">
+              <code class="cmd-line">${{ github.sha }} / github.ref_name</code>
+              <span class="cmd-desc">Access GitHub context: SHA, branch name, actor, etc.</span>
+            </div>
+          </div>
+        </div>
+        <div>
+          <p class="sub-title">Matrix Build</p>
+          <div class="code-block" style="margin-bottom: 12px;">
+            <button class="copy-btn" aria-label="Copy code">Copy</button>
+            <pre><code>strategy:
+  fail-fast: false
+  matrix:
+    node: [18, 20, 22]
+    os: [ubuntu-latest, windows-latest]
+
+runs-on: ${{ matrix.os }}
+<span class="cmt"># Spawns 6 parallel jobs (3 node versions × 2 OSes)</span>
+steps:
+  - uses: actions/setup-node@v4
+    with:
+      node-version: ${{ matrix.node }}</code></pre>
+          </div>
+          <p class="sub-title">Dependency Caching</p>
+          <div class="code-block">
+            <button class="copy-btn" aria-label="Copy code">Copy</button>
+            <pre><code>- uses: actions/cache@v4
+  with:
+    path: ~/.npm
+    key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+    restore-keys: |
+      ${{ runner.os }}-node-</code></pre>
+          </div>
+        </div>
+      </div>
+      <p class="example-label">Example — CI Workflow: Test on Push to main &amp; on All PRs</p>
+      <div class="code-block">
+        <button class="copy-btn" aria-label="Copy code">Copy</button>
+        <pre><code>name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run linter
+        run: npm run lint
+
+      - name: Run tests
+        run: npm test
+
+      - name: Build
+        run: npm run build
+        env:
+          API_KEY: ${{ secrets.API_KEY }}</code></pre>
+      </div>
+    </section>
+
+  </div><!-- /.grid -->
+</main>
+
+<footer>
+  Built as a quick reference &mdash; not a replacement for <code>git --help</code>
+</footer>
+
+<script>
+  // ── Theme toggle ──────────────────────────────────────────
+  (function() {
+    var html = document.documentElement;
+    var btn  = document.getElementById('themeToggle');
+
+    // Restore saved preference; default to dark if none saved
+    var saved = localStorage.getItem('theme');
+    if (saved === 'light') {
+      html.classList.remove('dark');
+    } else {
+      html.classList.add('dark'); // default
+    }
+
+    btn.addEventListener('click', function() {
+      var isDark = html.classList.toggle('dark');
+      localStorage.setItem('theme', isDark ? 'dark' : 'light');
+    });
+  })();
+
+  // ── Copy buttons ──────────────────────────────────────────
+  document.querySelectorAll('.copy-btn').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      var pre = btn.nextElementSibling;
+      var raw = pre.textContent || pre.innerText;
+
+      // Strip comment lines (lines beginning with #) and trim blank edges
+      var filtered = raw
+        .split('\n')
+        .filter(function(line) { return line.trim().charAt(0) !== '#'; })
+        .join('\n')
+        .trim();
+
+      var succeed = function() {
+        btn.textContent = 'Copied!';
+        btn.classList.add('copied');
+        setTimeout(function() {
+          btn.textContent = 'Copy';
+          btn.classList.remove('copied');
+        }, 2000);
+      };
+
+      if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard.writeText(filtered).then(succeed).catch(fallback);
+      } else {
+        fallback();
+      }
+
+      function fallback() {
+        var ta = document.createElement('textarea');
+        ta.value = filtered;
+        ta.style.cssText = 'position:fixed;opacity:0;pointer-events:none';
+        document.body.appendChild(ta);
+        ta.select();
+        try { document.execCommand('copy'); succeed(); } catch(e) {}
+        document.body.removeChild(ta);
+      }
+    });
+  });
+</script>
+
+</body>
+</html>

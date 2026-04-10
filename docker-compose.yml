@@ -1,0 +1,10 @@
+services:
+  git-cheatsheet:
+    image: nginx:alpine
+    container_name: git-cheatsheet
+    restart: unless-stopped
+    ports:
+      - "8167:80"
+    volumes:
+      - ./src:/usr/share/nginx/html:ro
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
